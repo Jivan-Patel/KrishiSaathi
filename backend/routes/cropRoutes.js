@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
+const { translateData } = require('../utils/dataTranslations');
 
 const cropDataPath = path.join(__dirname, '../../cropData.json');
 
@@ -14,7 +15,8 @@ const getCrops = () => {
 router.get('/', (req, res) => {
     try {
         const crops = getCrops();
-        res.json(crops);
+        const { lang } = req.query;
+        res.json(translateData(crops, lang));
     } catch (err) {
         res.status(500).json({ message: 'Error reading crop data' });
     }
@@ -25,8 +27,9 @@ router.get('/:id', (req, res) => {
     try {
         const crops = getCrops();
         const crop = crops.find(c => c.id == req.params.id);
+        const { lang } = req.query;
         if (crop) {
-            res.json(crop);
+            res.json(translateData(crop, lang));
         } else {
             res.status(404).json({ message: 'Crop not found' });
         }
@@ -47,8 +50,8 @@ router.get('/recommendations/filter', (req, res) => {
             const matchWater = !water || crop.waterRequirement.toLowerCase() === water.toLowerCase();
             return matchSoil && matchSeason && matchWater;
         });
-
-        res.json(filteredCrops);
+        const { lang } = req.query;
+        res.json(translateData(filteredCrops, lang));
     } catch (err) {
         res.status(500).json({ message: 'Error filtering recommendations' });
     }

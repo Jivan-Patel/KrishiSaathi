@@ -65,9 +65,18 @@ const Community = () => {
                         {questions.map(q => (
                             <article key={q._id} className="premium-card hover:translate-y-0 hover:border-primary-200">
                                 <div className="flex justify-between items-start gap-6 mb-8">
-                                    <div className="flex-1">
-                                        <h3 className="text-2xl font-black text-primary-900 leading-tight italic pr-4">"{q.question}"</h3>
-                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-2">{new Date().toLocaleDateString()} • Verified User</p>
+                                    <div className="flex items-start gap-4 flex-1">
+                                        <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-black text-xl border-2 border-white shadow-sm shrink-0">
+                                            {q.question.charAt(1).toUpperCase()}
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                <span className="px-2 py-0.5 bg-primary-50 text-primary-600 text-[8px] font-black rounded uppercase tracking-widest border border-primary-100">Verified Farmer</span>
+                                                <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[8px] font-black rounded uppercase tracking-widest">{['Pest Control', 'Irrigation', 'Market Intel'][q.upvotes % 3]}</span>
+                                            </div>
+                                            <h3 className="text-2xl font-black text-primary-900 leading-tight italic pr-4">"{q.question}"</h3>
+                                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-2">{new Date().toLocaleDateString()} • {q.replies.length} replies</p>
+                                        </div>
                                     </div>
                                     <button
                                         onClick={() => handleUpvote(q._id)}
@@ -80,7 +89,7 @@ const Community = () => {
 
                                 <div className="space-y-4 mb-8">
                                     {q.replies.length > 0 ? q.replies.map((reply, i) => (
-                                        <div key={i} className="bg-surface-200 p-6 rounded-[2rem] border border-primary-50 relative group">
+                                        <div key={i} className="bg-surface-200 p-6 rounded-4xl border border-primary-50 relative group">
                                             <div className="absolute left-0 top-6 w-1 h-8 bg-primary-200 rounded-r-full"></div>
                                             <p className="text-gray-700 font-bold text-sm leading-relaxed">{reply.text}</p>
                                             <p className="text-[10px] text-primary-400 mt-2 font-black uppercase tracking-widest">{new Date(reply.createdAt).toLocaleDateString()}</p>

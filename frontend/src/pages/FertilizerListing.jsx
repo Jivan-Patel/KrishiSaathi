@@ -5,24 +5,36 @@ import { useLanguage } from '../context/LanguageContext';
 import { Link } from 'react-router-dom';
 
 const FertilizerListing = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [fertilizers, setFertilizers] = useState([]);
+    const [filteredFertilizers, setFilteredFertilizers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        axios.get('http://localhost:5000/api/fertilizers')
-            .then(res => {
-                setFertilizers(res.data);
+        const fetchFertilizers = async () => {
+            try {
+                const response = await axios.get(`http://localhost:5000/api/fertilizers?lang=${language}`);
+                setFertilizers(response.data);
+                setFilteredFertilizers(response.data); // Initialize filtered list with all fertilizers
                 setLoading(false);
-            })
-            .catch(err => console.error(err));
-    }, []);
+            } catch (err) {
+                console.error("Error fetching fertilizers:", err);
+                setLoading(false);
+            }
+        };
+        fetchFertilizers();
+    }, [language]); // Re-fetch when language changes
 
-    const filteredFertilizers = fertilizers.filter(f =>
-        f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        f.suitableCrops.some(crop => crop.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    useEffect(() => {
+        // Filter fertilizers whenever searchTerm or fertilizers list changes
+        const results = fertilizers.filter(f =>
+            f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            f.suitableCrops.some(crop => crop.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+        setFilteredFertilizers(results);
+    }, [searchTerm, fertilizers]);
+
 
     if (loading) return <div className="p-20 text-center font-black text-primary-600 text-2xl">{t('loadingIntelligence')}</div>;
 

@@ -5,19 +5,24 @@ import { Droplet, IndianRupee, MapPin, ChevronRight, Search, Sprout } from 'luci
 import { useLanguage } from '../context/LanguageContext';
 
 const CropLibrary = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [crops, setCrops] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        axios.get('http://localhost:5000/api/crops')
-            .then(res => {
-                setCrops(res.data);
+        const fetchCrops = async () => {
+            try {
+                const response = await axios.get(`http://localhost:5000/api/crops?lang=${language}`);
+                setCrops(response.data);
                 setLoading(false);
-            })
-            .catch(err => console.error(err));
-    }, []);
+            } catch (err) {
+                console.error("Error fetching crops:", err);
+                setLoading(false);
+            }
+        };
+        fetchCrops();
+    }, [language]);
 
     const filteredCrops = crops.filter(crop =>
         crop.name.toLowerCase().includes(searchTerm.toLowerCase())

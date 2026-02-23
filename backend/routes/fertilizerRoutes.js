@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
+const { translateData } = require('../utils/dataTranslations');
 
 // Load fertilizer data once at server start for performance
 const fertilizerDataPath = path.join(__dirname, '../../fertilizerData.json');
@@ -18,7 +19,7 @@ try {
 // GET all fertilizers
 router.get('/', (req, res) => {
     try {
-        const { crop, crops } = req.query;
+        const { crop, crops, lang } = req.query;
 
         if (crops) {
             // Multi-crop safe parsing: comma-separated, trim, lowercase, remove duplicates
@@ -31,7 +32,7 @@ router.get('/', (req, res) => {
             const filtered = fertilizerData.filter(f =>
                 f.suitableCrops.some(sc => cropList.includes(sc.toLowerCase()))
             );
-            return res.json(filtered);
+            return res.json(translateData(filtered, lang));
         }
 
         if (crop) {
@@ -39,10 +40,10 @@ router.get('/', (req, res) => {
             const filtered = fertilizerData.filter(f =>
                 f.suitableCrops.some(sc => sc.toLowerCase() === normalizedCrop)
             );
-            return res.json(filtered);
+            return res.json(translateData(filtered, lang));
         }
 
-        res.json(fertilizerData);
+        res.json(translateData(fertilizerData, lang));
     } catch (err) {
         res.status(500).json({ message: 'Error processing fertilizer request' });
     }

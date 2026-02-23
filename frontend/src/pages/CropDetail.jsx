@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { ChevronLeft, Info, Calendar, Bug, Sprout, MapPin, Layers, TrendingUp, IndianRupee } from 'lucide-react';
+import { ChevronLeft, Info, Calendar, Bug, Sprout, MapPin, Layers, TrendingUp, IndianRupee, Handshake, Truck } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const CropDetailBySection = ({ title, icon, content }) => (
@@ -19,23 +19,28 @@ const CropDetailBySection = ({ title, icon, content }) => (
 const CropDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [crop, setCrop] = useState(null);
     const [fertilizers, setFertilizers] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        axios.get(`http://localhost:5000/api/crops/${id}`)
-            .then(res => {
-                setCrop(res.data);
+        const fetchCrop = async () => {
+            try {
+                const response = await axios.get(`http://localhost:5000/api/crops/${id}?lang=${language}`);
+                setCrop(response.data);
                 setLoading(false);
-            })
-            .catch(err => console.error(err));
-    }, [id]);
+            } catch (err) {
+                console.error("Error fetching crop:", err);
+                setLoading(false);
+            }
+        };
+        fetchCrop();
+    }, [id, language]);
 
     useEffect(() => {
         if (crop?.name) {
-            axios.get(`http://localhost:5000/api/fertilizers?crop=${crop.name}`)
+            axios.get(`http://localhost:5000/api/fertilizers?crop=${crop.name}&lang=${language}`)
                 .then(res => setFertilizers(res.data))
                 .catch(err => console.error(err));
         }
@@ -190,9 +195,32 @@ const CropDetail = () => {
                         </div>
                     </div>
 
-                    <Link to="/sell" className="btn-premium w-full block text-center shadow-2xl">
-                        Sell Your {crop.name}
-                    </Link>
+                    <div className="flex flex-col md:flex-row gap-4">
+                        <Link to="/sell" className="btn-premium flex-1 flex justify-center items-center gap-2">
+                            Sell Your {crop.name}
+                        </Link>
+                        <button className="btn-premium-outline flex justify-center items-center gap-2">
+                            Download PDF Guide
+                        </button>
+                    </div>
+
+                    {/* Ecosystem Grid */}
+                    <div className="pt-8 border-t border-primary-50">
+                        <h3 className="text-xs font-black text-primary-500 uppercase tracking-[0.2em] mb-6">Localized Ecosystem Actions</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {[
+                                { title: 'Find Buyers', path: '/sell', icon: <Handshake size={20} />, sub: 'Direct Buyer Access' },
+                                { title: 'Check Market Price', path: '/mandi-rates', icon: <TrendingUp size={20} />, sub: 'Live Mandi Intel' },
+                                { title: 'Request Transport', path: '/transport', icon: <Truck size={20} />, sub: 'Verified Logistics' }
+                            ].map((action, i) => (
+                                <Link key={i} to={action.path} className="p-6 bg-white border border-primary-50 rounded-2xl hover-lift group">
+                                    <div className="text-primary-600 mb-4 group-hover:scale-110 transition-transform">{action.icon}</div>
+                                    <h4 className="text-sm font-black text-gray-900 mb-1">{action.title}</h4>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">{action.sub}</p>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
                 </aside>
             </div>
         </div>

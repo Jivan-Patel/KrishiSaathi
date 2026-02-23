@@ -4,23 +4,37 @@ import { IndianRupee, TrendingUp, Search } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const MandiRates = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [crops, setCrops] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [stateFilter, setStateFilter] = useState('');
+    const [districtFilter, setDistrictFilter] = useState('');
+    const [sortBy, setSortBy] = useState('none');
 
     useEffect(() => {
-        axios.get('http://localhost:5000/api/crops')
+        axios.get(`http://localhost:5000/api/crops?lang=${language}`)
             .then(res => {
                 setCrops(res.data);
                 setLoading(false);
             })
             .catch(err => console.error(err));
-    }, []);
+    }, [language]);
 
-    const filteredCrops = crops.filter(crop =>
-        crop.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredCrops = crops
+        .filter(crop => crop.name.toLowerCase().includes(searchTerm.toLowerCase()))
+        .sort((a, b) => {
+            if (sortBy === 'high') return b.avgMarketPricePerQuintal - a.avgMarketPricePerQuintal;
+            if (sortBy === 'low') return a.avgMarketPricePerQuintal - b.avgMarketPricePerQuintal;
+            return 0;
+        });
+
+    const getTrend = (id) => {
+        const hash = id % 3;
+        if (hash === 0) return { icon: <TrendingUp size={16} className="text-green-500" />, label: '▲' };
+        if (hash === 1) return { icon: <TrendingUp size={16} className="text-red-500 rotate-180" />, label: '▼' };
+        return { icon: <div className="w-4 h-0.5 bg-gray-300 rounded-full"></div>, label: '▬' };
+    };
 
     if (loading) return <div className="p-20 text-center font-black text-primary-600 text-2xl italic">{t('loadingIntelligence')}</div>;
 
@@ -35,14 +49,31 @@ const MandiRates = () => {
                     <div className="bg-primary-50 text-primary-700 px-6 py-2 rounded-2xl font-black text-xs uppercase tracking-widest border border-primary-100 flex items-center gap-2">
                         <TrendingUp size={16} /> Market Active // {new Date().toLocaleDateString()}
                     </div>
-                    <div className="relative w-full md:w-80">
-                        <input
-                            type="text"
-                            placeholder={t('searchPlaceholder') || "Search crop..."}
-                            className="w-full p-4 pl-12 rounded-2xl border border-primary-100 bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/5 outline-none text-sm font-medium shadow-sm transition-all"
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-400" size={20} />
+                    <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                        <select
+                            className="p-4 rounded-2xl border border-primary-100 bg-white outline-none font-bold text-xs uppercase tracking-widest text-primary-600 appearance-none min-w-[140px]"
+                            onChange={(e) => setStateFilter(e.target.value)}
+                        >
+                            <option value="">Specific State</option>
+                            {['Punjab', 'Haryana', 'UP', 'Gujarat', 'Maharashtra'].map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                        <select
+                            className="p-4 rounded-2xl border border-primary-100 bg-white outline-none font-bold text-xs uppercase tracking-widest text-primary-600 appearance-none min-w-[140px]"
+                            onChange={(e) => setSortBy(e.target.value)}
+                        >
+                            <option value="none">Sort By Intelligence</option>
+                            <option value="high">Highest Market Price</option>
+                            <option value="low">Lowest Market Price</option>
+                        </select>
+                        <div className="relative w-full md:w-80">
+                            <input
+                                type="text"
+                                placeholder={t('searchPlaceholder') || "Search crop..."}
+                                className="w-full p-4 pl-12 rounded-2xl border border-primary-100 bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/5 outline-none text-sm font-medium shadow-sm transition-all"
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-400" size={20} />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -58,7 +89,12 @@ const MandiRates = () => {
                     <tbody className="divide-y divide-primary-50">
                         {filteredCrops.map(crop => (
                             <tr key={crop.id} className="hover:bg-primary-50 transition-colors group cursor-pointer">
-                                <td className="px-10 py-6 font-black text-xl text-gray-900 italic group-hover:translate-x-1 transition-transform">{crop.name}</td>
+                                <td className="px-10 py-6">
+                                    <div className="flex items-center gap-3">
+                                        <span className="font-black text-xl text-gray-900 italic group-hover:translate-x-1 transition-transform">{crop.name}</span>
+                                        {getTrend(crop.id).icon}
+                                    </div>
+                                </td>
                                 <td className="px-10 py-6 text-right">
                                     <div className="flex items-center justify-end gap-2 text-primary-700 font-black text-2xl">
                                         <IndianRupee size={22} className="opacity-50" />
@@ -82,7 +118,7 @@ const MandiRates = () => {
             <div className="p-10 bg-primary-600 rounded-[2.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
                 <div className="space-y-2">
                     <h4 className="text-2xl font-black italic">Price Transparency Policy</h4>
-                    <p className="text-primary-100 font-bold opacity-80">Rates are aggregated from verified local distributors.</p>
+                    <p className="text-primary-100 font-bold opacity-80">{t('mandiUpdateNote')}</p>
                 </div>
                 <button className="bg-white text-primary-700 font-black py-4 px-10 rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
                     Report Price Anomaly

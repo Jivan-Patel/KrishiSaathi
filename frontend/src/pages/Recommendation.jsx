@@ -1,42 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { Search, Info, CheckCircle, ChevronRight, Sprout, TrendingUp } from 'lucide-react';
+import { Search, Info, CheckCircle, ChevronRight, Sprout, TrendingUp, IndianRupee } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const Recommendation = () => {
-    const { t } = useLanguage();
-    const [formData, setFormData] = useState({ soil: '', season: '', water: '' });
-    const [results, setResults] = useState([]);
+    const { t, language } = useLanguage();
+    const [filters, setFilters] = useState({ soil: '', season: '', water: '' });
+    const [recommendations, setRecommendations] = useState([]);
     const [fertilizers, setFertilizers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searched, setSearched] = useState(false);
 
     useEffect(() => {
-        if (results.length > 0) {
-            const cropNames = results.map(c => c.name).join(',');
-            axios.get(`http://localhost:5000/api/fertilizers?crops=${cropNames}`)
-                .then(res => setFertilizers(res.data))
-                .catch(err => console.error(err));
-        } else {
-            setFertilizers([]);
-        }
-    }, [results]);
+        const fetchFertilizers = async () => {
+            if (recommendations.length > 0) {
+                const cropNames = recommendations.map(c => c.name).join(',');
+                try {
+                    const response = await axios.get(`http://localhost:5000/api/fertilizers?crops=${cropNames}&lang=${language}`);
+                    setFertilizers(response.data);
+                } catch (err) {
+                    console.error("Error fetching fertilizers:", err);
+                }
+            } else {
+                setFertilizers([]);
+            }
+        };
+        fetchFertilizers();
+    }, [recommendations, language]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setSearched(true);
-        const query = new URLSearchParams(formData).toString();
-        axios.get(`http://localhost:5000/api/crops/recommendations/filter?${query}`)
-            .then(res => {
-                setResults(res.data);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error(err);
-                setLoading(false);
-            });
+        try {
+            const response = await axios.get(`http://localhost:5000/api/crops/recommendations/filter?soil=${filters.soil}&season=${filters.season}&water=${filters.water}&lang=${language}`);
+            // Enhance results with match logic
+            const enhancedData = response.data.map(crop => {
+                let score = 0;
+                if (!filters.soil || crop.suitableSoils?.includes(filters.soil)) score += 33;
+                else if (crop.suitableSoils?.some(s => s.includes(filters.soil) || filters.soil.includes(s))) score += 20; // Partial
+
+                if (!filters.season || crop.season === filters.season) score += 33;
+                if (!filters.water || crop.waterRequirement === filters.water) score += 34;
+
+                return { ...crop, matchScore: score };
+            }).sort((a, b) => b.matchScore - a.matchScore);
+
+            setRecommendations(enhancedData);
+            setLoading(false);
+        } catch (err) {
+            console.error("Error filtering crops:", err);
+            setLoading(false);
+        }
     };
 
     return (
@@ -47,7 +63,7 @@ const Recommendation = () => {
                     <div className="bg-white rounded-[2.5rem] p-10 shadow-premium border border-primary-50 space-y-8">
                         <div>
                             <h2 className="text-4xl font-black text-gray-900 italic tracking-tight">{t('navAdvice')}</h2>
-                            <p className="text-gray-500 font-bold mt-2">Get AI-driven crop recommendations for your field.</p>
+                            <p className="text-primary-600 font-bold mt-2 text-sm leading-relaxed">Based on 3 matching factors from your field profile</p>
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
@@ -55,7 +71,7 @@ const Recommendation = () => {
                                 <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest pl-2">Field Condition</label>
                                 <select
                                     className="w-full p-5 rounded-2xl bg-surface-200 border-2 border-transparent focus:border-primary-500 focus:bg-white outline-none font-bold text-gray-700 transition-all appearance-none"
-                                    onChange={e => setFormData({ ...formData, soil: e.target.value })}
+                                    onChange={e => setFilters({ ...filters, soil: e.target.value })}
                                     required
                                 >
                                     <option value="">Specific Soil Type</option>
@@ -64,7 +80,7 @@ const Recommendation = () => {
 
                                 <select
                                     className="w-full p-5 rounded-2xl bg-surface-200 border-2 border-transparent focus:border-primary-500 focus:bg-white outline-none font-bold text-gray-700 transition-all appearance-none"
-                                    onChange={e => setFormData({ ...formData, season: e.target.value })}
+                                    onChange={e => setFilters({ ...filters, season: e.target.value })}
                                     required
                                 >
                                     <option value="">Current/Next Season</option>
@@ -73,7 +89,7 @@ const Recommendation = () => {
 
                                 <select
                                     className="w-full p-5 rounded-2xl bg-surface-200 border-2 border-transparent focus:border-primary-500 focus:bg-white outline-none font-bold text-gray-700 transition-all appearance-none"
-                                    onChange={e => setFormData({ ...formData, water: e.target.value })}
+                                    onChange={e => setFilters({ ...filters, water: e.target.value })}
                                     required
                                 >
                                     <option value="">Water Availability</option>
@@ -104,34 +120,75 @@ const Recommendation = () => {
                     )}
 
                     {loading && (
-                        <div className="flex flex-col items-center justify-center h-full space-y-4">
-                            <div className="w-16 h-16 border-4 border-primary-100 border-t-primary-600 rounded-full animate-spin"></div>
-                            <p className="font-black text-primary-900 italic">Processing Data...</p>
+                        <div className="flex flex-col items-center justify-center p-20 bg-white rounded-[3rem] border border-primary-50 shadow-sm">
+                            <div className="relative mb-8">
+                                <div className="absolute inset-0 bg-primary-200 rounded-full blur-2xl opacity-20 animate-pulse"></div>
+                                <Sprout size={80} className="text-primary-600 animate-bounce relative z-10" strokeWidth={1.5} />
+                            </div>
+                            <p className="text-2xl font-black text-primary-900 tracking-tighter uppercase italic">{t('loadingIntelligence')}</p>
+                            <div className="mt-4 flex gap-1">
+                                <div className="w-2 h-2 bg-primary-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                <div className="w-2 h-2 bg-primary-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                <div className="w-2 h-2 bg-primary-600 rounded-full animate-bounce"></div>
+                            </div>
                         </div>
                     )}
 
                     {searched && !loading && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className="flex items-center justify-between px-2">
-                                <h3 className="text-3xl font-black text-gray-900 italic tracking-tight">{results.length} Optimized Matches</h3>
+                                <h3 className="text-3xl font-black text-gray-900 italic tracking-tight">{recommendations.length} Optimized Matches</h3>
                                 <CheckCircle size={32} className="text-primary-500" />
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {results.length > 0 ? (
-                                    results.map(crop => (
-                                        <Link to={`/crops/${crop.id}`} key={crop.id} className="premium-card group hover:bg-primary-50">
+                                {recommendations.length > 0 ? (
+                                    recommendations.map((crop, index) => (
+                                        <Link to={`/crops/${crop.id}`} key={crop.id} className={`premium-card group hover:bg-primary-50 relative entry-fade ${index === 0 ? 'border-primary-500 ring-4 ring-primary-500/5' : ''}`} style={{ animationDelay: `${index * 0.1}s` }}>
+                                            {index === 0 && (
+                                                <div className="absolute -top-3 left-6 bg-primary-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full shadow-lg z-10 flex items-center gap-1 uppercase tracking-widest">
+                                                    <TrendingUp size={12} /> Top Recommendation
+                                                </div>
+                                            )}
+
                                             <div className="flex justify-between items-start mb-6">
                                                 <div>
                                                     <h4 className="text-2xl font-black text-gray-900 group-hover:text-primary-900 transition-colors uppercase italic">{crop.name}</h4>
-                                                    <p className="text-[10px] font-black text-primary-500 uppercase tracking-widest mt-1">High Suitability</p>
+                                                    <div className="flex items-center gap-2 mt-2">
+                                                        <div className="px-2 py-1 bg-primary-50 text-primary-600 text-[10px] font-black rounded-md uppercase tracking-tight">
+                                                            {crop.matchScore === 100 ? 'High Suitability' : crop.matchScore > 60 ? 'Medium Suitability' : 'Moderate Suitability'}
+                                                        </div>
+                                                        <div className="text-[10px] font-black text-primary-500 uppercase tracking-widest">{crop.matchScore}% Match</div>
+                                                    </div>
                                                 </div>
                                                 <div className="p-3 bg-white text-primary-600 rounded-xl shadow-sm group-hover:bg-primary-600 group-hover:text-white transition-all">
                                                     <ChevronRight size={20} />
                                                 </div>
                                             </div>
-                                            <div className="p-6 bg-primary-50/50 rounded-2xl border border-primary-100/50 text-sm font-bold text-gray-600 leading-relaxed italic">
-                                                "Recommended based on your soil profile and seasonal water availability."
+
+                                            {/* Match Progress */}
+                                            <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden mb-6">
+                                                <div
+                                                    className="bg-primary-500 h-full transition-all duration-1000"
+                                                    style={{ width: `${crop.matchScore}%` }}
+                                                ></div>
+                                            </div>
+
+                                            <div className="grid grid-cols-3 gap-2 mb-6">
+                                                {[
+                                                    { label: 'Soil', match: !filters.soil || crop.suitableSoils?.includes(filters.soil) },
+                                                    { label: 'Season', match: !filters.season || crop.season === filters.season },
+                                                    { label: 'Water', match: !filters.water || crop.waterRequirement === filters.water }
+                                                ].map((factor, i) => (
+                                                    <div key={i} className={`p-2 rounded-xl border flex flex-col items-center gap-1 ${factor.match ? 'bg-primary-50 border-primary-100' : 'bg-gray-50 border-gray-100'}`}>
+                                                        <span className="text-[8px] font-black uppercase text-gray-400">{factor.label}</span>
+                                                        {factor.match ? <CheckCircle size={14} className="text-primary-500" /> : <div className="w-3.5 h-3.5 rounded-full border border-gray-300"></div>}
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <div className="p-4 bg-primary-50/50 rounded-2xl border border-primary-100/50 text-[11px] font-bold text-gray-600 leading-relaxed italic">
+                                                "Optimum yield expected with your current {filters.soil} soil profile."
                                             </div>
                                         </Link>
                                     ))
@@ -144,7 +201,7 @@ const Recommendation = () => {
                             </div>
 
                             {/* Recommended Fertilizers for Results */}
-                            {results.length > 0 && (
+                            {recommendations.length > 0 && (
                                 <div className="pt-12 space-y-6">
                                     <div className="flex items-center gap-4">
                                         <h3 className="text-3xl font-black text-gray-900 italic tracking-tight">{t('recommendedInputs')}</h3>
