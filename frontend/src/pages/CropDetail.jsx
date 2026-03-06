@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { ChevronLeft, Info, Calendar, Bug, Sprout, MapPin, Layers, TrendingUp, IndianRupee, Handshake, Truck } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { API_BASE_URL } from '../config';
 
 const CropDetailBySection = ({ title, icon, content }) => (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-primary-100">
@@ -27,7 +28,7 @@ const CropDetail = () => {
     useEffect(() => {
         const fetchCrop = async () => {
             try {
-                const response = await axios.get(`http://localhost:5000/api/crops/${id}?lang=${language}`);
+                const response = await axios.get(`${API_BASE_URL}/crops/${id}?lang=${language}`);
                 setCrop(response.data);
                 setLoading(false);
             } catch (err) {
@@ -40,7 +41,7 @@ const CropDetail = () => {
 
     useEffect(() => {
         if (crop?.name) {
-            axios.get(`http://localhost:5000/api/fertilizers?crop=${crop.name}&lang=${language}`)
+            axios.get(`${API_BASE_URL}/fertilizers?crop=${crop.name}&lang=${language}`)
                 .then(res => setFertilizers(res.data))
                 .catch(err => console.error(err));
         }

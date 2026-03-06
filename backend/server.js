@@ -8,6 +8,7 @@ const cropRoutes = require('./routes/cropRoutes');
 const communityRoutes = require('./routes/communityRoutes');
 const transportRoutes = require('./routes/transportRoutes');
 const fertilizerRoutes = require('./routes/fertilizerRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -27,6 +28,7 @@ app.use('/api/crops', cropRoutes);
 app.use('/api/community', communityRoutes);
 app.use('/api/transport', transportRoutes);
 app.use('/api/fertilizers', fertilizerRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check
 app.get('/', (req, res) => {

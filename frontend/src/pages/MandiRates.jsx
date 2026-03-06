@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { IndianRupee, TrendingUp, Search } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { API_BASE_URL } from '../config';
 
 const MandiRates = () => {
     const { t, language } = useLanguage();
@@ -13,7 +14,7 @@ const MandiRates = () => {
     const [sortBy, setSortBy] = useState('none');
 
     useEffect(() => {
-        axios.get(`http://localhost:5000/api/crops?lang=${language}`)
+        axios.get(`${API_BASE_URL}/crops?lang=${language}`)
             .then(res => {
                 setCrops(res.data);
                 setLoading(false);

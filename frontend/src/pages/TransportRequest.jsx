@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Truck, Send, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { API_BASE_URL } from '../config';
 
 const TransportRequest = () => {
     const { t } = useLanguage();
@@ -17,7 +18,7 @@ const TransportRequest = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         setLoading(true);
-        axios.post('http://localhost:5000/api/transport', formData)
+        axios.post(`${API_BASE_URL}/transport`, { ...formData, userRole: 'farmer' })
             .then(() => {
                 setSubmitted(true);
                 setLoading(false);

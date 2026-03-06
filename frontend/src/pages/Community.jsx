@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { MessageSquare, Send, ThumbsUp, HelpCircle } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { API_BASE_URL } from '../config';
 
 const Community = () => {
     const { t } = useLanguage();
@@ -11,7 +12,7 @@ const Community = () => {
     const [loading, setLoading] = useState(true);
 
     const fetchQuestions = () => {
-        axios.get('http://localhost:5000/api/community/questions')
+        axios.get(`${API_BASE_URL}/community/questions`)
             .then(res => {
                 setQuestions(res.data);
                 setLoading(false);
@@ -26,7 +27,7 @@ const Community = () => {
     const handlePostQuestion = (e) => {
         e.preventDefault();
         if (!newQuestion.trim()) return;
-        axios.post('http://localhost:5000/api/community/questions', { question: newQuestion })
+        axios.post(`${API_BASE_URL}/community/questions`, { question: newQuestion })
             .then(() => {
                 setNewQuestion('');
                 fetchQuestions();
@@ -35,7 +36,7 @@ const Community = () => {
 
     const handlePostReply = (id) => {
         if (!replyText[id]?.trim()) return;
-        axios.post(`http://localhost:5000/api/community/questions/${id}/reply`, { text: replyText[id] })
+        axios.post(`${API_BASE_URL}/community/questions/${id}/reply`, { text: replyText[id] })
             .then(() => {
                 setReplyText({ ...replyText, [id]: '' });
                 fetchQuestions();
@@ -43,7 +44,7 @@ const Community = () => {
     };
 
     const handleUpvote = (id) => {
-        axios.post(`http://localhost:5000/api/community/questions/${id}/upvote`)
+        axios.post(`${API_BASE_URL}/community/questions/${id}/upvote`)
             .then(() => fetchQuestions());
     };
 

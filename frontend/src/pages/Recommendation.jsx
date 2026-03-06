@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Search, Info, CheckCircle, ChevronRight, Sprout, TrendingUp, IndianRupee } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { API_BASE_URL } from '../config';
 
 const Recommendation = () => {
     const { t, language } = useLanguage();
@@ -17,7 +18,7 @@ const Recommendation = () => {
             if (recommendations.length > 0) {
                 const cropNames = recommendations.map(c => c.name).join(',');
                 try {
-                    const response = await axios.get(`http://localhost:5000/api/fertilizers?crops=${cropNames}&lang=${language}`);
+                    const response = await axios.get(`${API_BASE_URL}/fertilizers?crops=${cropNames}&lang=${language}`);
                     setFertilizers(response.data);
                 } catch (err) {
                     console.error("Error fetching fertilizers:", err);
@@ -34,12 +35,12 @@ const Recommendation = () => {
         setLoading(true);
         setSearched(true);
         try {
-            const response = await axios.get(`http://localhost:5000/api/crops/recommendations/filter?soil=${filters.soil}&season=${filters.season}&water=${filters.water}&lang=${language}`);
+            const response = await axios.get(`${API_BASE_URL}/crops/recommendations/filter?soil=${filters.soil}&season=${filters.season}&water=${filters.water}&lang=${language}`);
             // Enhance results with match logic
             const enhancedData = response.data.map(crop => {
                 let score = 0;
-                if (!filters.soil || crop.suitableSoils?.includes(filters.soil)) score += 33;
-                else if (crop.suitableSoils?.some(s => s.includes(filters.soil) || filters.soil.includes(s))) score += 20; // Partial
+                if (!filters.soil || crop.soilTypes?.includes(filters.soil)) score += 33;
+                else if (crop.soilTypes?.some(s => s.includes(filters.soil) || filters.soil.includes(s))) score += 20; // Partial
 
                 if (!filters.season || crop.season === filters.season) score += 33;
                 if (!filters.water || crop.waterRequirement === filters.water) score += 34;
@@ -176,7 +177,7 @@ const Recommendation = () => {
 
                                             <div className="grid grid-cols-3 gap-2 mb-6">
                                                 {[
-                                                    { label: 'Soil', match: !filters.soil || crop.suitableSoils?.includes(filters.soil) },
+                                                    { label: 'Soil', match: !filters.soil || crop.soilTypes?.includes(filters.soil) },
                                                     { label: 'Season', match: !filters.season || crop.season === filters.season },
                                                     { label: 'Water', match: !filters.water || crop.waterRequirement === filters.water }
                                                 ].map((factor, i) => (
@@ -188,7 +189,7 @@ const Recommendation = () => {
                                             </div>
 
                                             <div className="p-4 bg-primary-50/50 rounded-2xl border border-primary-100/50 text-[11px] font-bold text-gray-600 leading-relaxed italic">
-                                                "Optimum yield expected with your current {filters.soil} soil profile."
+                                                {`Optimum yield expected with your current ${filters.soil} soil profile.`}
                                             </div>
                                         </Link>
                                     ))
