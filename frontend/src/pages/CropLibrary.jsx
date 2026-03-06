@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { Droplet, IndianRupee, MapPin, ChevronRight, Search, Sprout } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { API_BASE_URL } from '../config';
 
 const CropLibrary = () => {
     const { t, language } = useLanguage();
@@ -13,7 +14,7 @@ const CropLibrary = () => {
     useEffect(() => {
         const fetchCrops = async () => {
             try {
-                const response = await axios.get(`http://localhost:5000/api/crops?lang=${language}`);
+                const response = await axios.get(`${API_BASE_URL}/crops?lang=${language}`);
                 setCrops(response.data);
                 setLoading(false);
             } catch (err) {
