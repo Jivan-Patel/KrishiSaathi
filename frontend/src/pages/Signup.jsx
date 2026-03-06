@@ -1,7 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Sprout, Mail, Lock, User, Eye, EyeOff, AlertCircle, CheckCircle, Briefcase } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import { useAuth } from '../context/AuthContext';
+
+const ROLE_REDIRECTS = {
+    farmer: '/',
+    buyer: '/dashboard/buyer',
+    seller: '/dashboard/seller',
+    transporter: '/dashboard/transporter',
+};
 
 const Signup = () => {
     const [formData, setFormData] = useState({
@@ -14,7 +22,14 @@ const Signup = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
+    const { user } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (user) {
+            navigate(ROLE_REDIRECTS[user.role] || '/');
+        }
+    }, [user, navigate]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });

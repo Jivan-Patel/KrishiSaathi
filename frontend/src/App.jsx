@@ -28,17 +28,55 @@ function App() {
             <Navbar />
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={<Dashboard />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
-              <Route path="/crops" element={<CropLibrary />} />
-              <Route path="/crops/:id" element={<CropDetail />} />
-              <Route path="/recommendation" element={<Recommendation />} />
-              <Route path="/mandi-rates" element={<MandiRates />} />
-              <Route path="/community" element={<Community />} />
-              <Route path="/sell" element={<SellMyCrop />} />
-              <Route path="/transport" element={<TransportRequest />} />
-              <Route path="/fertilizers" element={<FertilizerListing />} />
+
+              {/* Farmer only routes */}
+              <Route path="/" element={
+                <ProtectedRoute allowedRole="farmer">
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/crops" element={
+                <ProtectedRoute allowedRole="farmer">
+                  <CropLibrary />
+                </ProtectedRoute>
+              } />
+              <Route path="/crops/:id" element={
+                <ProtectedRoute allowedRole="farmer">
+                  <CropDetail />
+                </ProtectedRoute>
+              } />
+              <Route path="/recommendation" element={
+                <ProtectedRoute allowedRole="farmer">
+                  <Recommendation />
+                </ProtectedRoute>
+              } />
+              <Route path="/mandi-rates" element={
+                <ProtectedRoute allowedRole="farmer">
+                  <MandiRates />
+                </ProtectedRoute>
+              } />
+              <Route path="/community" element={
+                <ProtectedRoute allowedRole="farmer">
+                  <Community />
+                </ProtectedRoute>
+              } />
+              <Route path="/sell" element={
+                <ProtectedRoute allowedRole="farmer">
+                  <SellMyCrop />
+                </ProtectedRoute>
+              } />
+              <Route path="/transport" element={
+                <ProtectedRoute allowedRole="farmer">
+                  <TransportRequest />
+                </ProtectedRoute>
+              } />
+              <Route path="/fertilizers" element={
+                <ProtectedRoute allowedRole="farmer">
+                  <FertilizerListing />
+                </ProtectedRoute>
+              } />
 
               {/* Protected role-based dashboard routes */}
               <Route path="/dashboard/buyer" element={

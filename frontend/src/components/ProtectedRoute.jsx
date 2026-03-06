@@ -16,8 +16,15 @@ const ProtectedRoute = ({ allowedRole, children }) => {
     }
 
     if (allowedRole && role !== allowedRole) {
-        // Wrong role → send to home
-        return <Navigate to="/" replace />;
+        // Wrong role → send to their respective dashboard
+        const dashboardMap = {
+            'farmer': '/',
+            'buyer': '/dashboard/buyer',
+            'seller': '/dashboard/seller',
+            'transporter': '/dashboard/transporter'
+        };
+        const redirectPath = dashboardMap[role] || '/login';
+        return <Navigate to={redirectPath} replace />;
     }
 
     return children;
